@@ -1,0 +1,16 @@
+build*/
+*.gguf
+*.exe
+*.dll
+*.lib
+*.obj
+*.pdb
+*.nsys-rep
+*.sqlite
+*.log
+*.pyc
+__pycache__/
+.vs/
+.vscode/
+.env
+keys.txt
