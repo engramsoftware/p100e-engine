@@ -49,6 +49,8 @@ In testing, this gave about 25 tokens per second of output with about 350 MB of 
 
 The rest of this guide explains each step by hand, for when you want more control.
 
+To run it in a cluster, see [KUBERNETES.md](KUBERNETES.md).
+
 ## 1. What you need
 
 | item | details |

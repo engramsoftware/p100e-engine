@@ -1,0 +1,5 @@
+.git
+build/
+third_party/llama.cpp-fork/build/
+keys.txt
+*.gguf

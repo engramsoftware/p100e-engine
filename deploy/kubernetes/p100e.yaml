@@ -1,0 +1,125 @@
+# p100e-server on one GPU. docs/KUBERNETES.md walks through it.
+# Change the three CHANGE_ME values first.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: p100e
+  labels:
+    app: p100e
+spec:
+  replicas: 1                # one server owns the GPU, and more replicas would not share work or chats
+  strategy:
+    type: Recreate           # the old pod must let go of the GPU before the new one starts
+  selector:
+    matchLabels:
+      app: p100e
+  template:
+    metadata:
+      labels:
+        app: p100e
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: CHANGE_ME-node-with-the-p100
+      # runtimeClassName: nvidia   # needed if nvidia is not the node's default container runtime
+      containers:
+        - name: server
+          image: CHANGE_ME-registry/p100e-server:latest
+          imagePullPolicy: IfNotPresent
+          # Settings for one 16 GB P100 and a model of about 13 GB. For two GPUs, see docs/KUBERNETES.md.
+          args:
+            - -m
+            - /models/CHANGE_ME-model.gguf
+            - --alias
+            - qwen
+            - --host
+            - 0.0.0.0
+            - --port
+            - "8080"
+            - -c
+            - "32768"
+            - -np
+            - "1"
+            - -ub
+            - "32"
+            - --jinja
+            - --p100e-devices
+            - "0"
+            - --p100e-mtp
+            - "0"
+            - --p100e-kv
+            - q4_0
+            - --p100e-pool-tokens
+            - "32768"
+            - --p100e-host-budget-mb
+            - "4096"
+            - --p100e-no-remote-images
+            - --api-key-file
+            - /secrets/keys.txt
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: "2"
+              memory: 8Gi
+            limits:
+              memory: 16Gi
+              nvidia.com/gpu: 1
+          # /health answers 503 while the model loads and needs no key. A load takes about 90 s from a fast disk.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: models
+              mountPath: /models
+              readOnly: true
+            - name: keys
+              mountPath: /secrets
+              readOnly: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+      volumes:
+        - name: models
+          hostPath:              # a folder on the GPU node. A PersistentVolumeClaim works here too.
+            path: /models
+            type: Directory
+        - name: keys
+          secret:
+            secretName: p100e-keys
+            defaultMode: 0440
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: p100e
+  labels:
+    app: p100e
+spec:
+  type: ClusterIP            # inside the cluster only
+  selector:
+    app: p100e
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

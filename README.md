@@ -194,6 +194,7 @@ With node 0 on one GPU the results are bit-identical to a one-GPU run. With node
 |---|---|
 | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) | Step-by-step guide: build, get a model, run the server, connect apps, share it safely. |
 | [docs/QUICKSTART.md](docs/QUICKSTART.md) | Copy-paste command lines for common jobs. |
+| [docs/KUBERNETES.md](docs/KUBERNETES.md) | Run the server in a container on Kubernetes. |
 | [docs/FLAGS.md](docs/FLAGS.md) | Every command-line flag and environment variable of `p100e-server` and `p100e-run`. |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the engine, the server, tensor parallelism, vision and drafting fit together. |
 | [server/README.md](server/README.md) | Server internals: build, engine interface, prompt cache, failure handling. |
